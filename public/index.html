@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="icon" href="/img/favicon.png" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script defer>
+        window.onload = function() {
+          document.querySelector('input.room').focus();
+        };
+
+        function setCookie(name, value) {
+          const today = new Date();
+          const expire = new Date(today.getTime() + 86400000);
+          document.cookie = name + "=" + escape(value) + "; path=/; expires=" + expire.toGMTString();
+        }
+      </script>
+    <title>chat</title>
+  </head>
+  <body>
+  <div class="log-in">
+    <form action="/auth/google/callback" onsubmit="setCookie('chat-room', document.querySelector('input.room').value);">
+      <input name="room" class="room" type="text" placeholder="room">
+      <button class="googs"></button>
+    </form>
+    </div>
+  </body>
+</html>

@@ -12,9 +12,9 @@ const asyncReplaceYouTubeLinks = async (str, regex) => {
     const tubeId = tube.substring(tube.lastIndexOf('/') + 1).replace(/\?t=\d+$/, '');
 
     let uri = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&fields=items(id,snippet(title))';
-    uri += `&id=${tubeId}&key=AIzaSyDoRoCVlydTmvykucUhelmTa4FiPz8scx0`;
+    uri += `&id=${tubeId}&key=${process.env.GOOGLE_YOUTUBE_V3_API_KEY}`;
 
-    promises.push(request.get(uri).set('Referer', 'localhost').then((res) => [match, res.body.items[0].snippet.title]));
+    promises.push(request.get(uri).then((res) => [match, res.body.items[0].snippet.title]));
   });
 
   // EXECUTE THEM

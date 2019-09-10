@@ -44,7 +44,8 @@ module.exports = (io) => {
 
     socket.on('join', ({ room, username }, callback) => {
       try {
-        const user = addUser({ id: socket.id, username, room });
+        const email = socket.request.session.passport.user;
+        const user = addUser({ id: socket.id, username, email, room });
         socket.join(user.room);
 
         // tell everyone user joined room
@@ -88,7 +89,7 @@ module.exports = (io) => {
           console.log(`error disconnecting ${user.username} from ${user.room}: ${err.message}`);
         }
       } else {
-        if (io.sockets.connected[socket.id]) {
+        if (io.sockets.connected && io.sockets.connected[socket.id]) {
           console.log(`unidentified user connection found. ${socket.id} disconnecting.`);
           // io.sockets.connected[socket.id].disconnect();
           socket.disconnect();

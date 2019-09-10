@@ -1,7 +1,7 @@
 // this stores user/room info in memory only
 const users = [];
 
-const addUser = ({ id, username, room }) => {
+const addUser = ({ id, username, email, room }) => {
   // prevent "dupes"
   username = username.trim();
   room = room.trim().toLowerCase();
@@ -18,7 +18,7 @@ const addUser = ({ id, username, room }) => {
     throw new Error(`${username} in use.`);
   }
 
-  const user = { id, username, room };
+  const user = { id, username, email, room };
   users.push(user);
 
   return user;

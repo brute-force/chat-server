@@ -3,4 +3,4 @@ Are you tired of your friends never looking at the videos you send them in chat?
   
 Here's a chat server that parses YouTube links and automatically plays the videos right on their chat page! Now they'll have to watch your videos -- at least until they close the browser tab.  
   
-Written in [express](https://github.com/expressjs/express), [socket.io](https://github.com/socketio/socket.io), with Google authentication in [passport](https://github.com/jaredhanson/passport-google).
+Written in [express](https://github.com/expressjs/express), [socket.io](https://github.com/socketio/socket.io), with Google authentication in [passport](https://github.com/jaredhanson/passport-google-oauth2).

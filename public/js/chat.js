@@ -19,16 +19,6 @@ const $scriptTemplateMessage = document.querySelector('#message-template');
 const $scriptTemplateLocation = document.querySelector('#location-template');
 const $scriptTemplateSidebar = document.querySelector('#sidebar-template');
 
-// retrieve the passport cookie
-// const getCookieValue = (a) => {
-//   const b = document.cookie.match('(^|[^;]+)\\s*' + a + '\\s*=\\s*([^;]+)');
-//   return b ? b.pop() : 'ahem';
-// };
-
-// retrieve username and room from cookies
-// const username = decodeURIComponent(getCookieValue('chat-username'));
-// const room = decodeURIComponent(getCookieValue('chat-room'));
-
 const momentFormatTimestamp = 'h:mm:ss a';
 
 const autoscroll = () => {
@@ -53,33 +43,6 @@ const autoscroll = () => {
   }
 };
 
-// render message
-socket.on('message', ({ username, message, createdAt }) => {
-  if (username === 'admin') {
-    username = `<i>${username}</i>`;
-  }
-
-  createdAt = moment(createdAt).format(momentFormatTimestamp);
-  const html = Mustache.render($scriptTemplateMessage.innerHTML, { createdAt, username, message });
-  $divMessages.insertAdjacentHTML('beforeend', html);
-  autoscroll();
-});
-
-// render video
-socket.on('youtube', ({ username, message, createdAt }) => {
-  // force everyone to watch a video you sent, autoplay
-  console.log(`${username} sent youtube link: ${message}`);
-  document.getElementById('ahem').src = message + (/\?start=\d+$/.test(message) ? '&' : '?') + 'autoplay=1';
-});
-
-// render location
-socket.on('location', ({ username, message, createdAt }) => {
-  createdAt = moment(createdAt).format(momentFormatTimestamp);
-  const html = Mustache.render($scriptTemplateLocation.innerHTML, { createdAt, username, url: message });
-  $divMessages.insertAdjacentHTML('beforeend', html);
-  autoscroll();
-});
-
 // send message
 $buttonSend.addEventListener('click', (e) => {
   if ($textMessage.value.trim().length === 0) {
@@ -92,18 +55,25 @@ $buttonSend.addEventListener('click', (e) => {
   if (socket.connected) {
     // kick a user
     if (/^\/kick /.test($textMessage.value.trim())) {
-      const user = $textMessage.value.trim().replace(/^\/kick (.+)/, '$1');
+      const username = $textMessage.value.trim().replace(/^\/kick (.+)/, '$1');
 
-      socket.emit('kick', { username: user, room }, (err, data) => {
+      socket.emit('kick', { username }, (err, data) => {
         if (err) {
           window.alert(err.message);
+
+          if (err.name === 'UserNotFoundError') {
+            window.location.href = '/auth/logout';
+          }
         }
       });
     } else {
       socket.emit('message', $textMessage.value, (err, data) => {
         if (err) {
           window.alert(err.message);
-          window.location.href = '/auth/logout';
+
+          if (err.name === 'UserNotFoundError') {
+            window.location.href = '/auth/logout';
+          }
         }
       });
     }
@@ -135,7 +105,10 @@ $buttonLocation.addEventListener('click', (e) => {
     socket.emit('location', coords, (err, data) => {
       if (err) {
         window.alert(err.message);
-        window.location.href = '/auth/logout';
+
+        if (err.name === 'UserNotFoundError') {
+          window.location.href = '/auth/logout';
+        }
       }
 
       $buttonLocation.removeAttribute('disabled');
@@ -168,6 +141,33 @@ window.fetch('/user')
       }
     });
   });
+
+// render message
+socket.on('message', ({ username, message, createdAt }) => {
+  if (username === 'admin') {
+    username = `<i>${username}</i>`;
+  }
+
+  createdAt = moment(createdAt).format(momentFormatTimestamp);
+  const html = Mustache.render($scriptTemplateMessage.innerHTML, { createdAt, username, message });
+  $divMessages.insertAdjacentHTML('beforeend', html);
+  autoscroll();
+});
+
+// render video
+socket.on('youtube', ({ username, message, createdAt }) => {
+  // force everyone to watch a video you sent, autoplay
+  console.log(`${username} sent youtube link: ${message}`);
+  document.getElementById('ahem').src = message + (/\?start=\d+$/.test(message) ? '&' : '?') + 'autoplay=1';
+});
+
+// render location
+socket.on('location', ({ username, message, createdAt }) => {
+  createdAt = moment(createdAt).format(momentFormatTimestamp);
+  const html = Mustache.render($scriptTemplateLocation.innerHTML, { createdAt, username, url: message });
+  $divMessages.insertAdjacentHTML('beforeend', html);
+  autoscroll();
+});
 
 // update user room list
 socket.on('roomData', ({ room, users }) => {

@@ -1,6 +1,7 @@
 const { generateMessage, asyncReplaceYouTubeLinks } = require('./utils/messages');
 const { addUser, removeUser, getUser, getUsersInRoom, removeUserFromRoom } = require('./utils/users');
 const SocketError = require('./utils/SocketError');
+const UserNotFoundError = require('./utils/UserNotFoundError');
 
 module.exports = (io) => {
   // handle the chat events
@@ -25,7 +26,7 @@ module.exports = (io) => {
         io.to(user.room).emit('message', generateMessage(user.username, message));
         callback(null, 'message sent');
       } else {
-        callback(new SocketError('oops! you got kicked, son!'));
+        callback(new UserNotFoundError('oops! you got kicked, son!'));
       }
     });
 
@@ -34,11 +35,12 @@ module.exports = (io) => {
       const user = getUser(socket.id);
 
       if (user) {
-        io.to(user.room).emit('location', generateMessage(user.username, `https://google.com/maps?q=${coords.latitude},${coords.longitude}`));
+        const location = `https://google.com/maps?q=${coords.latitude},${coords.longitude}`;
+        io.to(user.room).emit('location', generateMessage(user.username, location));
 
         callback(null, 'location shared');
       } else {
-        callback(new SocketError('oops! you got kicked, son!'));
+        callback(new UserNotFoundError('oops! you got kicked, son!'));
       }
     });
 
@@ -73,7 +75,7 @@ module.exports = (io) => {
       if (user) {
         try {
           socket.leave(user.room);
-          socket.disconnect();
+          // socket.disconnect();
 
           // tell everyone user left room
           const msgLeft = `${user.username} left ${user.room}.`;
@@ -88,48 +90,55 @@ module.exports = (io) => {
         } catch (err) {
           console.log(`error disconnecting ${user.username} from ${user.room}: ${err.message}`);
         }
-      } else {
-        if (io.sockets.connected && io.sockets.connected[socket.id]) {
-          console.log(`unidentified user connection found. ${socket.id} disconnecting.`);
-          // io.sockets.connected[socket.id].disconnect();
-          socket.disconnect();
-
-          if (io.sockets.connected[socket.id]) {
-            console.log(`${socket.id} not disconnected.`);
-          } else {
-            console.log(`${socket.id} disconnected.`);
-          }
-        } else {
-          console.log(`unidentified user connection not found. ${socket.id} already disconnected.`);
-        }
       }
     });
 
     // kick a user
-    socket.on('kick', ({ username, room }, callback) => {
+    socket.on('kick', ({ username }, callback) => {
       const kicker = getUser(socket.id);
 
-      if (kicker.username === username) {
-        callback(new SocketError(`cannot kick yourself from ${room}.`));
-      } else {
-        const user = removeUserFromRoom(username, room);
+      if (kicker) {
+        const room = kicker.room;
 
-        if (user) {
-          // tell everyone user got kicked :(
-          const msgKicked = `${kicker.username} kicked ${user.username} from ${user.room}.`;
-          console.log(msgKicked);
-          io.to(user.room).emit('message', generateMessage('admin', msgKicked));
-
-          // update room user list
-          io.to(user.room).emit('roomData', {
-            room: user.room,
-            users: getUsersInRoom(user.room)
-          });
-
-          callback(null, user);
+        if (kicker.username === username) {
+          callback(new SocketError(`cannot kick yourself from ${room}.`));
         } else {
-          callback(new SocketError(`${username} not found in ${room}.`));
+          const user = removeUserFromRoom(username, room);
+
+          if (user) {
+            const socketsConnected = io.of('/').connected;
+            const socketToKick = socketsConnected[user.id];
+
+            if (socketToKick) {
+              try {
+                console.log(`attempting to kick ${username} ${user.id} from ${room}.`);
+                socketToKick.leave(room);
+
+                // tell everyone user got kicked :(
+                const msgKicked = `${kicker.username} kicked ${username} from ${room}.`;
+                console.log(msgKicked);
+                io.to(room).emit('message', generateMessage('admin', msgKicked));
+
+                // update room user list
+                io.to(room).emit('roomData', {
+                  room: room,
+                  users: getUsersInRoom(room)
+                });
+              } catch (err) {
+                console.log(`error removing ${username} from ${room}: ${err.message}`);
+              }
+            } else {
+              console.log(`${username} kicked from ${room}. no sockets open.`);
+            }
+
+            callback(null, user);
+          } else {
+            callback(new SocketError(`${username} not found in ${room}.`));
+          }
         }
+      } else {
+        // kicker is not in this room or is disconnected. do you even go to this school?
+        callback(new UserNotFoundError('oops! you\'re the one who got kicked, son!'));
       }
     });
   });

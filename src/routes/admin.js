@@ -14,10 +14,14 @@ const returnRouter = (io) => {
     const user = removeUserFromRoom(req.params.username, req.params.room);
 
     if (user) {
-      if (io.sockets.connected[user.id]) {
+      const socketsConnected = io.of('/').connected;
+      const socketToKick = socketsConnected[user.id];
+
+      if (socketToKick) {
         try {
           console.log(`attempting to remove ${user.username} ${user.id} from ${user.room}.`);
-          io.sockets.connected[user.id].disconnect();
+          socketToKick.leave(req.params.room);
+          // io.sockets.connected[user.id].disconnect();
 
           // tell everyone user removed from room
           const msgRemoved = `${user.username} removed from ${user.room}.`;
@@ -37,7 +41,13 @@ const returnRouter = (io) => {
       }
     }
 
-    res.json(user || { message: `${req.params.username} not found in ${req.params.room}.` });
+    res.json(user || {
+      message: `${req.params.username} not found in ${req.params.room}.`,
+      room: {
+        name: req.params.room,
+        users: getUsersInRoom(req.params.room)
+      }
+    });
   });
 
   return router;

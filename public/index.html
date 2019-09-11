@@ -10,18 +10,12 @@
         window.onload = function() {
           document.querySelector('input.room').focus();
         };
-
-        function setCookie(name, value) {
-          const today = new Date();
-          const expire = new Date(today.getTime() + 86400000);
-          document.cookie = name + "=" + escape(value) + "; path=/; expires=" + expire.toGMTString();
-        }
       </script>
     <title>chat</title>
   </head>
   <body>
   <div class="log-in">
-    <form action="/auth/google/callback" onsubmit="setCookie('chat-room', document.querySelector('input.room').value);">
+    <form action="/auth/login" method="GET">
       <input name="room" class="room" type="text" placeholder="room">
       <button class="googs"></button>
     </form>

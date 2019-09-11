@@ -23,7 +23,8 @@ const store = session({
 // set up session store; 1 day
 app.use(store);
 
-const io = socketio(server).use((socket, next) => {
+const io = socketio(server);
+io.use((socket, next) => {
   store(socket.request, {}, next);
 });
 

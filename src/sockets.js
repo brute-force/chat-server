@@ -1,5 +1,5 @@
 const { generateMessage, asyncReplaceYouTubeLinks } = require('./utils/messages');
-const { addUser, removeUser, getUser, getUsersInRoom, removeUserFromRoom } = require('./utils/users');
+const { addUser, removeUser, getUser, getUsersInRoom, removeUserFromRoom, getRooms } = require('./utils/users');
 const SocketError = require('./utils/SocketError');
 const UserNotFoundError = require('./utils/UserNotFoundError');
 
@@ -47,7 +47,28 @@ module.exports = (io) => {
     socket.on('join', ({ room, username }, callback) => {
       try {
         const email = socket.request.session.passport.user;
+
+        if (!username) {
+          const userToRemove = getUser(socket.id);
+          removeUserFromRoom(userToRemove.username, userToRemove.room);
+          socket.leave(userToRemove.room);
+
+          // tell everyone user left room
+          const msgLeft = `${userToRemove.username} left ${userToRemove.room}.`;
+          console.log(msgLeft);
+          io.to(userToRemove.room).emit('message', generateMessage('admin', msgLeft));
+
+          // update room user list
+          io.to(userToRemove.room).emit('roomData', {
+            room: userToRemove.room,
+            users: getUsersInRoom(userToRemove.room)
+          });
+
+          username = userToRemove.username;
+        }
+
         const user = addUser({ id: socket.id, username, email, room });
+
         socket.join(user.room);
 
         // tell everyone user joined room
@@ -60,6 +81,11 @@ module.exports = (io) => {
         io.to(user.room).emit('roomData', {
           room: user.room,
           users: getUsersInRoom(user.room)
+        });
+
+        // update everyone of room list
+        io.emit('worldData', {
+          rooms: getRooms()
         });
 
         callback(null, user);

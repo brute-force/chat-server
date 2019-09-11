@@ -49,10 +49,15 @@ const getUsersInRoom = (room) => {
   return users.filter((user) => user.room === room);
 };
 
+const getRooms = () => {
+  return users.map((user) => user.room).filter((room, i, rooms) => rooms.indexOf(room) === i);
+};
+
 module.exports = {
   addUser,
   removeUser,
   removeUserFromRoom,
   getUser,
-  getUsersInRoom
+  getUsersInRoom,
+  getRooms
 };

@@ -50,6 +50,10 @@ input.room {
     outline: none;
 }
 
+input.message {
+    width: 400px;
+}
+
 button {
     cursor: pointer;
     padding: 12px;
@@ -118,11 +122,27 @@ button.googs {
 }
 
 .chat__sidebar {
-    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat__sidebar_room {
+    /* height: 100vh; */
+    height: 85vh;
     color: white;
     background: #333744;
     width: 225px;
-    overflow-y: scroll
+    float:left;
+    /* overflow-y: scroll; */
+}
+
+.chat__sidebar_rooms {
+    /* height: 100vh; */
+    height: 15vh;
+    color: white;
+    background: #333744;
+    width: 225px;
+    /* overflow-y: scroll; */
 }
 
 /* Chat styles */
@@ -220,6 +240,13 @@ a:visited {
     /* padding: 24px;    */
     padding: 12px 24px 12px 12px;
 }
+.rooms-title {
+    font-weight: 200;
+    font-size: 20px;
+    background: #2c2f3a;
+    /* padding: 24px;    */
+    padding: 12px 24px 12px 12px;
+}
 
 .log-out {
     font-weight: 100;
@@ -244,6 +271,12 @@ button.logout {
     list-style-type: none;
     font-weight: 300;
     padding: 42px 24px 0 24px;
+}
+
+.rooms {
+    list-style-type: none;
+    font-weight: 100;
+    padding: 12px 24px 0 24px;
 }
 
 /* video */

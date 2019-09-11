@@ -10,14 +10,16 @@ const $buttonSend = $form.querySelector('.send');
 const $buttonLocation = $form.querySelector('.location');
 const $buttonLogout = $form.querySelector('.logout');
 const $divMessages = document.querySelector('#messages');
-const $divSidebar = document.querySelector('.chat__sidebar');
+const $divSidebarRoom = document.querySelector('.chat__sidebar_room');
+const $divSidebarRooms = document.querySelector('.chat__sidebar_rooms');
 
 $textMessage.focus();
 
 // mustache templates
 const $scriptTemplateMessage = document.querySelector('#message-template');
 const $scriptTemplateLocation = document.querySelector('#location-template');
-const $scriptTemplateSidebar = document.querySelector('#sidebar-template');
+const $scriptTemplateSidebarRoom = document.querySelector('#sidebar-room');
+const $scriptTemplateSidebarRooms = document.querySelector('#sidebar-rooms');
 
 const momentFormatTimestamp = 'h:mm:ss a';
 
@@ -64,6 +66,15 @@ $buttonSend.addEventListener('click', (e) => {
           if (err.name === 'UserNotFoundError') {
             window.location.href = '/auth/logout';
           }
+        }
+      });
+    } else if (/^\/join /.test($textMessage.value.trim())) {
+      const room = $textMessage.value.trim().replace(/^\/join (.+)/, '$1');
+
+      socket.emit('join', { room }, (err, user) => {
+        if (err) {
+          window.alert(err.message);
+          window.location.href = '/auth/logout';
         }
       });
     } else {
@@ -127,6 +138,17 @@ $buttonLogout.addEventListener('click', (e) => {
   window.location.href = '/auth/logout';
 });
 
+document.querySelector('.chat__sidebar_rooms').addEventListener('click', (e) => {
+  e.preventDefault();
+
+  socket.emit('join', { room: e.target.innerText }, (err, user) => {
+    if (err) {
+      window.alert(err.message);
+      window.location.href = '/auth/logout';
+    }
+  });
+});
+
 // get user info and join room
 window.fetch('/user')
   .then((res) => res.json())
@@ -171,6 +193,12 @@ socket.on('location', ({ username, message, createdAt }) => {
 
 // update user room list
 socket.on('roomData', ({ room, users }) => {
-  const html = Mustache.render($scriptTemplateSidebar.innerHTML, { room, users });
-  $divSidebar.innerHTML = html;
+  const html = Mustache.render($scriptTemplateSidebarRoom.innerHTML, { room, users });
+  $divSidebarRoom.innerHTML = html;
+});
+
+// update rooms list
+socket.on('worldData', ({ rooms }) => {
+  const html = Mustache.render($scriptTemplateSidebarRooms.innerHTML, { rooms });
+  $divSidebarRooms.innerHTML = html;
 });

@@ -3,9 +3,8 @@ const http = require('http');
 const socketio = require('socket.io');
 const passport = require('passport');
 const path = require('path');
-var session = require('express-session');
-var MemoryStore = require('memorystore')(session);
-
+const session = require('express-session');
+const MemoryStore = require('memorystore')(session);
 const routesAuth = require('./routes/auth');
 require('./utils/passport');
 
@@ -52,5 +51,9 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, '../private')));
+
+app.get('/user', (req, res) => {
+  res.json({ user: req.user, room: req.session.room });
+});
 
 module.exports = server;

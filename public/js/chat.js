@@ -20,14 +20,14 @@ const $scriptTemplateLocation = document.querySelector('#location-template');
 const $scriptTemplateSidebar = document.querySelector('#sidebar-template');
 
 // retrieve the passport cookie
-const getCookieValue = (a) => {
-  const b = document.cookie.match('(^|[^;]+)\\s*' + a + '\\s*=\\s*([^;]+)');
-  return b ? b.pop() : 'ahem';
-};
+// const getCookieValue = (a) => {
+//   const b = document.cookie.match('(^|[^;]+)\\s*' + a + '\\s*=\\s*([^;]+)');
+//   return b ? b.pop() : 'ahem';
+// };
 
 // retrieve username and room from cookies
-const username = decodeURIComponent(getCookieValue('chat-username'));
-const room = decodeURIComponent(getCookieValue('chat-room'));
+// const username = decodeURIComponent(getCookieValue('chat-username'));
+// const room = decodeURIComponent(getCookieValue('chat-room'));
 
 const momentFormatTimestamp = 'h:mm:ss a';
 
@@ -154,13 +154,20 @@ $buttonLogout.addEventListener('click', (e) => {
   window.location.href = '/auth/logout';
 });
 
-// join room
-socket.emit('join', { room, username }, (err, user) => {
-  if (err) {
-    window.alert(err.message);
-    window.location.href = '/auth/logout';
-  }
-});
+// get user info and join room
+window.fetch('/user')
+  .then((res) => res.json())
+  .then((json) => {
+    const room = json.room;
+    const username = json.user.display_name;
+
+    socket.emit('join', { room, username }, (err, user) => {
+      if (err) {
+        window.alert(err.message);
+        window.location.href = '/auth/logout';
+      }
+    });
+  });
 
 // update user room list
 socket.on('roomData', ({ room, users }) => {

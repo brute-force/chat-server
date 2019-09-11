@@ -1,11 +1,44 @@
 const router = require('express').Router();
-const { getUsersInRoom, removeUserFromRoom } = require('../utils/users');
+const { getUser, getUsersInRoom, removeUserFromRoom } = require('../utils/users');
 const { generateMessage } = require('../utils/messages');
 
 // should protect this route w/ an admin user
 const returnRouter = (io) => {
+  // protect these routes w/ a set admin user
+  router.all('/*', (req, res, next) => {
+    if (req.user.user_id !== process.env.USER_ADMIN) {
+      res.json({ message: 'not an admin', isAuthenticated: req.isAuthenticated() });
+    } else {
+      next();
+    }
+  });
+
   // get all the users in room
-  router.get('/getUsers/:room', (req, res) => {
+  router.get('/getRooms', (req, res) => {
+    const original = io.sockets.adapter.rooms;
+    const rooms = [];
+
+    Object.keys(io.sockets.adapter.rooms).map((key) => {
+      const name = key;
+      const sockets = Object.keys(original[name].sockets);
+
+      const room = {
+        name,
+        users: []
+      };
+
+      sockets.forEach((socket) => {
+        room.users.push({ id: socket, username: getUser(socket) });
+      });
+
+      rooms.push(room);
+    });
+
+    res.json(rooms);
+  });
+
+  // get all the users in room
+  router.get('/getUsersInRoom/:room', (req, res) => {
     res.json(getUsersInRoom(req.params.room));
   });
 

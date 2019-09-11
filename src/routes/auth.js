@@ -2,11 +2,6 @@ const router = require('express').Router();
 const passport = require('passport');
 
 router.get('/logout', function (req, res) {
-  if (req.user && req.user.user_id) {
-    res.clearCookie('chat-username');
-    res.clearCookie('chat-room');
-  }
-
   req.logout();
   res.redirect('/');
 });
@@ -33,7 +28,14 @@ router.get('/google/callback', passport.authenticate('google', loginOptions), (r
 
   // redirect to chat page after successful login
   // set a 1-day cookie w/ profile and room info
-  res.redirect('/chat.html');
+  let redirectPath = '/chat.html';
+
+  if (req.session.originalUrl) {
+    redirectPath = req.session.originalUrl;
+    delete req.session.originalUrl;
+  }
+
+  res.redirect(redirectPath);
 });
 
 module.exports = router;

@@ -6,6 +6,7 @@ const path = require('path');
 const session = require('express-session');
 const MemoryStore = require('memorystore')(session);
 const routesAuth = require('./routes/auth');
+const routesAdmin = require('./routes/admin');
 require('./utils/passport');
 
 // set up server and socketio
@@ -40,19 +41,22 @@ app.use(passport.session());
 
 // mount routes
 app.use('/auth', routesAuth);
-app.use('/admin', require('./routes/admin')(io));
 
 // mount private files
 app.use((req, res, next) => {
   if (req.isAuthenticated()) {
     next();
   } else {
+    req.session.originalUrl = req.originalUrl;
     res.redirect('/');
   }
 });
 
+// mount private
 app.use(express.static(path.join(__dirname, '../private')));
+app.use('/admin', routesAdmin(io));
 
+// endpoint for current user info
 app.get('/user', (req, res) => {
   res.json({ user: req.user, room: req.session.room });
 });

@@ -2,7 +2,6 @@ const router = require('express').Router();
 const { getUser, getUsersInRoom, removeUserFromRoom } = require('../utils/users');
 const { generateMessage } = require('../utils/messages');
 
-// should protect this route w/ an admin user
 const returnRouter = (io) => {
   // protect these routes w/ a set admin user
   router.all('/*', (req, res, next) => {
@@ -28,7 +27,7 @@ const returnRouter = (io) => {
       };
 
       sockets.forEach((socket) => {
-        room.users.push({ id: socket, username: getUser(socket) });
+        room.users.push({ socket, user: getUser(socket) });
       });
 
       rooms.push(room);
@@ -54,7 +53,6 @@ const returnRouter = (io) => {
         try {
           console.log(`attempting to remove ${user.username} ${user.id} from ${user.room}.`);
           socketToKick.leave(req.params.room);
-          // io.sockets.connected[user.id].disconnect();
 
           // tell everyone user removed from room
           const msgRemoved = `${user.username} removed from ${user.room}.`;

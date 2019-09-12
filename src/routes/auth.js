@@ -26,8 +26,8 @@ router.get('/google/callback', passport.authenticate('google', loginOptions), (r
   const room = JSON.parse(req.query.state).room;
   req.session.room = room || 'ahem';
 
-  // redirect to chat page after successful login
-  // set a 1-day cookie w/ profile and room info
+  // redirect to previously requested page
+  // otherwise, to chat page
   let redirectPath = '/chat.html';
 
   if (req.session.originalUrl) {

@@ -70,6 +70,9 @@ module.exports = (io) => {
         const user = addUser({ id: socket.id, username, email, room });
 
         socket.join(user.room);
+        // save the user room in session in case of reload
+        socket.request.session.room = user.room;
+        socket.request.session.save();
 
         // tell everyone user joined room
         const msgJoined = `${user.username} joined ${room}.`;

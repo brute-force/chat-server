@@ -22,9 +22,9 @@ router.get('/login', (req, res, next) => {
 });
 
 router.get('/google/callback', passport.authenticate('google', loginOptions), (req, res) => {
-  // pick up the chat room name
+  // pick up the chat room name and set default if none
   const room = JSON.parse(req.query.state).room;
-  req.session.room = room;
+  req.session.room = room || 'ahem';
 
   // redirect to chat page after successful login
   // set a 1-day cookie w/ profile and room info

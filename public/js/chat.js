@@ -1,5 +1,5 @@
 /* global moment */
-/* global Mustache */
+/* global Handlebars */
 /* global io */
 
 const socket = io();
@@ -13,13 +13,9 @@ const $divMessages = document.querySelector('#messages');
 const $divSidebarRoom = document.querySelector('.chat__sidebar_room');
 const $divSidebarRooms = document.querySelector('.chat__sidebar_rooms');
 
-$textMessage.focus();
+let currentRoom;
 
-// mustache templates
-const $scriptTemplateMessage = document.querySelector('#message-template');
-const $scriptTemplateLocation = document.querySelector('#location-template');
-const $scriptTemplateSidebarRoom = document.querySelector('#sidebar-room');
-const $scriptTemplateSidebarRooms = document.querySelector('#sidebar-rooms');
+$textMessage.focus();
 
 const momentFormatTimestamp = 'h:mm:ss a';
 
@@ -71,12 +67,18 @@ $buttonSend.addEventListener('click', (e) => {
     } else if (/^\/join /.test($textMessage.value.trim())) {
       const room = $textMessage.value.trim().replace(/^\/join (.+)/, '$1');
 
-      socket.emit('join', { room }, (err, user) => {
-        if (err) {
-          window.alert(err.message);
-          window.location.href = '/auth/logout';
-        }
-      });
+      if (currentRoom === room) {
+        window.alert(`you're already in ${room}.`);
+      } else {
+        currentRoom = room;
+
+        socket.emit('join', { room }, (err, user) => {
+          if (err) {
+            window.alert(err.message);
+            window.location.href = '/auth/logout';
+          }
+        });
+      }
     } else {
       socket.emit('message', $textMessage.value, (err, data) => {
         if (err) {
@@ -140,13 +142,20 @@ $buttonLogout.addEventListener('click', (e) => {
 
 document.querySelector('.chat__sidebar_rooms').addEventListener('click', (e) => {
   e.preventDefault();
+  const room = e.target.innerText;
 
-  socket.emit('join', { room: e.target.innerText }, (err, user) => {
-    if (err) {
-      window.alert(err.message);
-      window.location.href = '/auth/logout';
-    }
-  });
+  if (currentRoom === room) {
+    window.alert(`you're already in ${room}.`);
+  } else {
+    currentRoom = room;
+
+    socket.emit('join', { room }, (err, user) => {
+      if (err) {
+        window.alert(err.message);
+        window.location.href = '/auth/logout';
+      }
+    });
+  }
 });
 
 // get user info and join room
@@ -155,6 +164,7 @@ window.fetch('/user')
   .then((json) => {
     const room = json.room;
     const username = json.user.display_name;
+    currentRoom = room;
 
     socket.emit('join', { room, username }, (err, user) => {
       if (err) {
@@ -171,7 +181,7 @@ socket.on('message', ({ username, message, createdAt }) => {
   }
 
   createdAt = moment(createdAt).format(momentFormatTimestamp);
-  const html = Mustache.render($scriptTemplateMessage.innerHTML, { createdAt, username, message });
+  const html = Handlebars.templates.message({ createdAt, username, message });
   $divMessages.insertAdjacentHTML('beforeend', html);
   autoscroll();
 });
@@ -179,26 +189,26 @@ socket.on('message', ({ username, message, createdAt }) => {
 // render video
 socket.on('youtube', ({ username, message, createdAt }) => {
   // force everyone to watch a video you sent, autoplay
-  console.log(`${username} sent youtube link: ${message}`);
+  console.log(`${username} sent YouTube link: ${message}`);
   document.getElementById('ahem').src = message + (/\?start=\d+$/.test(message) ? '&' : '?') + 'autoplay=1';
 });
 
 // render location
 socket.on('location', ({ username, message, createdAt }) => {
   createdAt = moment(createdAt).format(momentFormatTimestamp);
-  const html = Mustache.render($scriptTemplateLocation.innerHTML, { createdAt, username, url: message });
+  const html = Handlebars.templates.location({ createdAt, username, url: message });
   $divMessages.insertAdjacentHTML('beforeend', html);
   autoscroll();
 });
 
 // update user room list
 socket.on('roomData', ({ room, users }) => {
-  const html = Mustache.render($scriptTemplateSidebarRoom.innerHTML, { room, users });
+  const html = Handlebars.templates.roomData({ room, users });
   $divSidebarRoom.innerHTML = html;
 });
 
 // update rooms list
 socket.on('worldData', ({ rooms }) => {
-  const html = Mustache.render($scriptTemplateSidebarRooms.innerHTML, { rooms });
+  const html = Handlebars.templates.worldData({ room: currentRoom, rooms: rooms.filter((el) => el !== currentRoom) });
   $divSidebarRooms.innerHTML = html;
 });

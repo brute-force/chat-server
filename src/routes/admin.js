@@ -12,7 +12,7 @@ const returnRouter = (io) => {
     }
   });
 
-  // get all the users in room
+  // get all the rooms
   router.get('/getRooms', (req, res) => {
     const original = io.sockets.adapter.rooms;
     const rooms = [];
@@ -42,7 +42,7 @@ const returnRouter = (io) => {
   });
 
   // kick a user from a room and disconnect
-  router.get('/removeUser/:username/:room', (req, res) => {
+  router.get('/removeUserFromRoom/:username/:room', (req, res) => {
     const user = removeUserFromRoom(req.params.username, req.params.room);
 
     if (user) {

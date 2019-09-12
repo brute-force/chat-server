@@ -58,7 +58,7 @@ app.use('/admin', routesAdmin(io));
 
 // endpoint for current user info
 app.get('/user', (req, res) => {
-  res.json({ user: req.user, room: req.session.room || 'ahem' });
+  res.json({ user: req.user, room: req.session.room });
 });
 
 module.exports = server;
